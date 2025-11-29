@@ -24,7 +24,7 @@ check_root() {
 
 # 检查Docker是否安装
 check_docker() {
-    echo -e "\n${GREEN}[1/6] 检查Docker环境...${NC}"
+    echo -e "\n${GREEN}[1/7] 检查Docker环境...${NC}"
     
     if ! command -v docker &> /dev/null; then
         echo -e "${RED}错误: Docker未安装${NC}"
@@ -63,9 +63,55 @@ check_docker() {
     docker compose version 2>/dev/null || docker-compose --version
 }
 
+# 检查并配置Docker镜像加速器
+check_docker_mirror() {
+    echo -e "\n${GREEN}[1.5/7] 检查Docker镜像加速器配置...${NC}"
+    
+    # 检查当前镜像加速器配置
+    local has_mirror=false
+    if [ -f /etc/docker/daemon.json ]; then
+        if grep -q "registry-mirrors" /etc/docker/daemon.json 2>/dev/null; then
+            has_mirror=true
+            echo -e "${GREEN}✓ 检测到Docker镜像加速器配置${NC}"
+            docker info 2>/dev/null | grep -A 5 "Registry Mirrors" || echo "  配置文件中存在，但可能未生效"
+        fi
+    fi
+    
+    # 如果未配置或配置可能无效，提供配置建议
+    if [ "$has_mirror" = false ] || ! docker info 2>/dev/null | grep -q "Registry Mirrors"; then
+        echo -e "${YELLOW}警告: Docker镜像加速器可能未正确配置${NC}"
+        echo -e "${YELLOW}这可能导致拉取镜像时超时或失败${NC}"
+        echo ""
+        echo -e "${GREEN}建议配置镜像加速器（需要root权限）:${NC}"
+        echo "  sudo mkdir -p /etc/docker"
+        echo "  sudo tee /etc/docker/daemon.json <<-'EOF'"
+        echo "  {"
+        echo "    \"registry-mirrors\": ["
+        echo "      \"https://6cuqr5nu.mirror.aliyuncs.com\","
+        echo "      \"https://docker.mirrors.ustc.edu.cn\","
+        echo "      \"https://hub-mirror.c.163.com\""
+        echo "    ]"
+        echo "  }"
+        echo "  EOF"
+        echo "  sudo systemctl daemon-reload"
+        echo "  sudo systemctl restart docker"
+        echo ""
+        echo -e "${YELLOW}如果已配置但仍有问题，请检查:${NC}"
+        echo "  1. /etc/docker/daemon.json 文件格式是否正确（JSON格式）"
+        echo "  2. 是否已重启Docker服务: sudo systemctl restart docker"
+        echo "  3. 验证配置: docker info | grep 'Registry Mirrors'"
+        echo ""
+        read -p "是否继续部署? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+}
+
 # 检查端口是否被占用
 check_ports() {
-    echo -e "\n${GREEN}[2/6] 检查端口占用...${NC}"
+    echo -e "\n${GREEN}[2/7] 检查端口占用...${NC}"
     
     # 从.env文件读取端口配置（如果存在）
     local ports=(80 443 5000)
@@ -110,7 +156,7 @@ check_ports() {
 
 # 创建必要的目录
 create_directories() {
-    echo -e "\n${GREEN}[3/6] 创建必要的目录...${NC}"
+    echo -e "\n${GREEN}[3/7] 创建必要的目录...${NC}"
     
     mkdir -p logs/backend
     mkdir -p ssl
@@ -120,7 +166,7 @@ create_directories() {
 
 # 检查环境变量文件
 check_env_file() {
-    echo -e "\n${GREEN}[4/6] 检查环境变量配置...${NC}"
+    echo -e "\n${GREEN}[4/7] 检查环境变量配置...${NC}"
     
     if [ ! -f .env ]; then
         echo -e "${YELLOW}未找到 .env 文件，从 .env.example 创建...${NC}"
@@ -141,7 +187,7 @@ check_env_file() {
 
 # 构建和启动服务
 build_and_start() {
-    echo -e "\n${GREEN}[5/6] 构建Docker镜像...${NC}"
+    echo -e "\n${GREEN}[5/7] 构建Docker镜像...${NC}"
     
     # 使用docker compose v2或v1
     if docker compose version &> /dev/null; then
@@ -160,7 +206,7 @@ build_and_start() {
     echo "构建镜像（这可能需要几分钟）..."
     $COMPOSE_CMD -f docker-compose.prod.yml build --no-cache
     
-    echo -e "\n${GREEN}[6/6] 启动服务...${NC}"
+    echo -e "\n${GREEN}[6/7] 启动服务...${NC}"
     $COMPOSE_CMD -f docker-compose.prod.yml up -d
     
     echo -e "\n${GREEN}✓ 服务启动完成${NC}"
@@ -232,6 +278,7 @@ show_status() {
 main() {
     check_root
     check_docker
+    check_docker_mirror
     check_ports
     create_directories
     check_env_file
