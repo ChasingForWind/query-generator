@@ -1,5 +1,4 @@
-# 使用阿里云容器镜像服务拉取基础镜像
-FROM registry.cn-hangzhou.aliyuncs.com/library/python:3.11-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
