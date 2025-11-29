@@ -1,5 +1,5 @@
-# 构建阶段 - 使用阿里云镜像加速器拉取基础镜像
-FROM 6cuqr5nu.mirror.aliyuncs.com/library/node:18-alpine AS build
+# 构建阶段 - 使用阿里云容器镜像服务拉取基础镜像
+FROM registry.cn-hangzhou.aliyuncs.com/library/node:18-alpine AS build
 
 WORKDIR /app
 
@@ -26,8 +26,8 @@ ENV NODE_ENV=production
 # 使用 vite 的快速构建模式
 RUN npm run build
 
-# 运行阶段 - 使用阿里云镜像加速器拉取基础镜像
-FROM 6cuqr5nu.mirror.aliyuncs.com/library/nginx:alpine
+# 运行阶段 - 使用阿里云容器镜像服务拉取基础镜像
+FROM registry.cn-hangzhou.aliyuncs.com/library/nginx:alpine
 
 # 复制构建产物到 nginx
 COPY --from=build /app/dist /usr/share/nginx/html

@@ -1,5 +1,5 @@
-# 使用阿里云镜像加速器拉取基础镜像
-FROM 6cuqr5nu.mirror.aliyuncs.com/library/python:3.11-slim
+# 使用阿里云容器镜像服务拉取基础镜像
+FROM registry.cn-hangzhou.aliyuncs.com/library/python:3.11-slim
 
 WORKDIR /app
 
