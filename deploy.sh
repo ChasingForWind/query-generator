@@ -41,6 +41,23 @@ check_docker() {
         exit 1
     fi
     
+    # 检查Docker权限
+    if ! docker info &> /dev/null; then
+        echo -e "${RED}错误: 无法访问Docker守护进程${NC}"
+        echo -e "${YELLOW}当前用户没有Docker权限，请选择以下解决方案之一:${NC}"
+        echo ""
+        echo -e "${GREEN}方案1（推荐）: 将当前用户添加到docker组${NC}"
+        echo "  sudo usermod -aG docker $USER"
+        echo "  然后重新登录或执行: newgrp docker"
+        echo ""
+        echo -e "${GREEN}方案2: 使用sudo运行此脚本${NC}"
+        echo "  sudo ./deploy.sh"
+        echo ""
+        echo -e "${GREEN}方案3: 使用sudo运行docker命令${NC}"
+        echo "  修改脚本中的docker命令为: sudo docker"
+        exit 1
+    fi
+    
     echo -e "${GREEN}✓ Docker环境检查通过${NC}"
     docker --version
     docker compose version 2>/dev/null || docker-compose --version
