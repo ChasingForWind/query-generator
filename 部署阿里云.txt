@@ -1,0 +1,666 @@
+==========================================
+阿里云轻量级服务器部署指南
+查询生成器项目 - 通过IP访问
+==========================================
+
+本指南提供在阿里云轻量级服务器上部署应用的完整步骤和命令。
+请按照步骤顺序执行，每个步骤完成后检查是否有错误。
+
+==========================================
+第一步：连接服务器
+==========================================
+
+使用SSH连接到您的阿里云服务器：
+
+# 使用密码登录（替换your-server-ip为您的服务器IP）
+ssh root@your-server-ip
+
+# 或使用密钥文件登录
+ssh -i your-key.pem root@your-server-ip
+
+# 如果使用普通用户，需要sudo权限
+ssh username@your-server-ip
+
+
+==========================================
+第二步：检查系统信息（重要！）
+==========================================
+
+# 1. 查看系统版本（必须先执行，确定是Ubuntu还是CentOS）
+cat /etc/os-release
+
+# 或者使用以下命令快速判断：
+cat /etc/redhat-release
+
+# 判断方法：
+# - 如果看到 "CentOS" 或 "Red Hat" -> 使用 CentOS 命令（yum）
+# - 如果看到 "Ubuntu" 或 "Debian" -> 使用 Ubuntu 命令（apt-get）
+
+# 2. 查看系统资源
+free -h
+df -h
+
+# 注意：根据系统类型，在第三步选择对应的安装命令！
+# 如果看到 "apt-get: command not found" 错误，说明是CentOS系统，请使用CentOS部分的命令（yum）
+
+
+==========================================
+第三步：安装Docker和Docker Compose
+==========================================
+
+⚠️ 重要：请根据第二步检测的系统类型，选择对应的安装命令！
+- Ubuntu/Debian系统 -> 使用 apt-get 命令
+- CentOS/RHEL系统 -> 使用 yum 命令
+
+【Ubuntu/Debian系统】
+
+# 1. 更新系统包
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# 2. 安装必要工具
+sudo apt-get install -y curl wget git vim net-tools
+
+# 3. 安装Docker（使用官方脚本）
+curl -fsSL https://get.docker.com | sh
+
+# 4. 启动Docker服务
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 5. 将当前用户添加到docker组（避免每次使用sudo）
+sudo usermod -aG docker $USER
+
+# 6. 安装Docker Compose插件
+sudo apt-get install -y docker-compose-plugin
+
+# 7. 验证安装
+docker --version
+docker compose version
+
+# 8. 配置Docker镜像加速（使用阿里云镜像，可选但推荐）
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": [
+    "https://registry.cn-hangzhou.aliyuncs.com",
+    "https://docker.mirrors.ustc.edu.cn"
+  ],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOF
+
+# 9. 重启Docker使配置生效
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
+# 10. 测试Docker是否正常工作
+docker run hello-world
+
+
+【CentOS系统】（如果遇到 apt-get: command not found，请使用这部分命令）
+
+# 1. 更新系统包
+sudo yum update -y
+
+# 2. 安装必要工具
+sudo yum install -y curl wget git vim net-tools
+
+# 3. 安装Docker依赖
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+
+# 4. 添加Docker仓库（使用阿里云镜像）
+sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+# 5. 安装Docker
+sudo yum install -y docker-ce docker-ce-cli containerd.io
+
+# 6. 启动Docker服务
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 7. 将当前用户添加到docker组
+sudo usermod -aG docker $USER
+
+# 8. 安装Docker Compose插件
+sudo yum install -y docker-compose-plugin
+
+# 9. 配置Docker镜像加速
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": [
+    "https://registry.cn-hangzhou.aliyuncs.com",
+    "https://docker.mirrors.ustc.edu.cn"
+  ],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOF
+
+# 10. 重启Docker
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
+# 11. 验证安装
+docker --version
+docker compose version
+
+# 12. 测试Docker
+docker run hello-world
+
+# 注意：如果使用普通用户，执行完usermod后需要重新登录或执行：
+newgrp docker
+
+
+==========================================
+第四步：配置防火墙
+==========================================
+
+【Ubuntu系统 - 使用UFW】
+
+# 1. 检查UFW状态
+sudo ufw status
+
+# 2. 开放必要端口
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS（预留）
+sudo ufw allow 5000/tcp  # 后端API（可选，如果直接访问后端）
+
+# 3. 启用防火墙
+sudo ufw enable
+
+# 4. 查看防火墙规则
+sudo ufw status numbered
+
+
+【CentOS系统 - 使用firewalld】
+
+# 1. 检查firewalld状态
+sudo systemctl status firewalld
+
+# 2. 如果未启动，启动firewalld
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+
+# 3. 开放必要端口
+sudo firewall-cmd --permanent --add-port=22/tcp    # SSH
+sudo firewall-cmd --permanent --add-port=80/tcp    # HTTP
+sudo firewall-cmd --permanent --add-port=443/tcp   # HTTPS（预留）
+sudo firewall-cmd --permanent --add-port=5000/tcp   # 后端API（可选）
+
+# 4. 重新加载防火墙
+sudo firewall-cmd --reload
+
+# 5. 查看防火墙规则
+sudo firewall-cmd --list-all
+
+
+==========================================
+第五步：配置阿里云安全组
+==========================================
+
+重要：除了服务器防火墙，还需要在阿里云控制台配置安全组规则！
+
+1. 登录阿里云控制台
+2. 进入"轻量应用服务器" -> 选择您的服务器
+3. 点击"防火墙"或"安全组"选项卡
+4. 添加以下规则：
+
+   - 规则方向：入方向
+   - 协议类型：TCP
+   - 端口范围：22/22
+   - 授权对象：0.0.0.0/0（或您的IP）
+   - 描述：SSH
+
+   - 规则方向：入方向
+   - 协议类型：TCP
+   - 端口范围：80/80
+   - 授权对象：0.0.0.0/0
+   - 描述：HTTP
+
+   - 规则方向：入方向
+   - 协议类型：TCP
+   - 端口范围：443/443
+   - 授权对象：0.0.0.0/0
+   - 描述：HTTPS（预留）
+
+   - 规则方向：入方向
+   - 协议类型：TCP
+   - 端口范围：5000/5000
+   - 授权对象：0.0.0.0/0
+   - 描述：后端API（可选）
+
+5. 保存规则
+
+
+==========================================
+第六步：从GitHub克隆项目代码
+==========================================
+
+# 1. 选择一个目录存放项目（例如：/opt 或 /home/username）
+cd /opt
+# 或
+cd ~
+
+# 2. 克隆项目（替换YOUR_GITHUB_REPO_URL为您的GitHub仓库地址）
+git clone YOUR_GITHUB_REPO_URL
+
+# 例如：
+# git clone https://github.com/yourusername/your-repo-name.git
+
+# 3. 进入项目目录
+cd query-generator
+
+# 4. 查看项目结构
+ls -la
+
+
+==========================================
+第七步：创建环境变量配置文件
+==========================================
+
+# 1. 创建.env文件
+cat > .env << 'EOF'
+# 前端端口配置（如果使用非root用户，建议使用8080等非特权端口）
+FRONTEND_PORT_HTTP=80
+FRONTEND_PORT_HTTPS=443
+
+# 后端端口配置
+BACKEND_PORT=5000
+
+# CORS配置（通过IP访问，设置为*允许所有来源，或指定具体IP）
+# 格式：http://your-server-ip,http://another-ip
+CORS_ORIGINS=*
+
+# Gunicorn工作进程数（推荐: (2 * CPU核心数) + 1）
+# 1核服务器建议设置为2，2核服务器建议设置为4
+GUNICORN_WORKERS=2
+GUNICORN_THREADS=2
+
+# 资源限制（根据服务器配置调整）
+# 1核2GB服务器建议值：
+BACKEND_CPU_LIMIT=1.0
+BACKEND_MEMORY_LIMIT=512M
+BACKEND_CPU_RESERVATION=0.5
+BACKEND_MEMORY_RESERVATION=256M
+
+FRONTEND_CPU_LIMIT=0.5
+FRONTEND_MEMORY_LIMIT=256M
+FRONTEND_CPU_RESERVATION=0.25
+FRONTEND_MEMORY_RESERVATION=128M
+
+# 日志级别
+LOG_LEVEL=INFO
+
+# 应用版本
+APP_VERSION=1.0.0
+EOF
+
+# 2. 查看配置文件内容
+cat .env
+
+# 3. 如果需要修改配置，使用编辑器编辑
+# nano .env
+# 或
+# vi .env
+
+
+==========================================
+第八步：创建必要的目录
+==========================================
+
+# 创建日志和SSL证书目录
+mkdir -p logs/backend
+mkdir -p ssl
+
+# 验证目录创建
+ls -la logs/
+ls -la ssl/
+
+
+==========================================
+第九步：部署应用
+==========================================
+
+# 方式一：使用自动部署脚本（推荐）
+
+# 1. 给部署脚本添加执行权限
+chmod +x deploy.sh
+
+# 2. 运行部署脚本
+./deploy.sh
+
+# 脚本会自动完成：
+# - 检查Docker环境
+# - 检查端口占用
+# - 创建必要目录
+# - 检查环境变量配置
+# - 构建Docker镜像
+# - 启动服务
+
+
+# 方式二：手动部署
+
+# 1. 停止旧容器（如果有）
+docker compose -f docker-compose.prod.yml down
+
+# 2. 构建Docker镜像（这可能需要5-10分钟，请耐心等待）
+docker compose -f docker-compose.prod.yml build --no-cache
+
+# 3. 启动服务
+docker compose -f docker-compose.prod.yml up -d
+
+# 4. 查看服务状态
+docker compose -f docker-compose.prod.yml ps
+
+# 5. 查看日志（检查是否有错误）
+docker compose -f docker-compose.prod.yml logs -f
+
+# 按 Ctrl+C 退出日志查看
+
+
+==========================================
+第十步：验证部署
+==========================================
+
+# 1. 检查容器运行状态
+docker compose -f docker-compose.prod.yml ps
+
+# 应该看到两个容器都在运行：
+# - query-generator-backend-prod
+# - query-generator-frontend-prod
+
+# 2. 检查容器健康状态
+docker ps
+
+# 3. 查看后端日志
+docker compose -f docker-compose.prod.yml logs backend
+
+# 4. 查看前端日志
+docker compose -f docker-compose.prod.yml logs frontend
+
+# 5. 测试后端API（在服务器上）
+curl http://localhost:5000/api/health
+
+# 应该返回：{"status":"healthy","message":"Query Generator API is running"}
+
+# 6. 测试前端（在服务器上）
+curl http://localhost
+
+# 应该返回HTML内容
+
+# 7. 获取服务器IP地址
+hostname -I
+# 或
+curl ifconfig.me
+
+# 8. 在浏览器中访问（替换YOUR_SERVER_IP为您的服务器IP）
+# http://YOUR_SERVER_IP
+# 或如果使用非80端口：
+# http://YOUR_SERVER_IP:8080
+
+
+==========================================
+常用管理命令
+==========================================
+
+# 查看服务状态
+docker compose -f docker-compose.prod.yml ps
+
+# 查看所有服务日志
+docker compose -f docker-compose.prod.yml logs -f
+
+# 查看特定服务日志
+docker compose -f docker-compose.prod.yml logs -f backend
+docker compose -f docker-compose.prod.yml logs -f frontend
+
+# 重启服务
+docker compose -f docker-compose.prod.yml restart
+
+# 重启特定服务
+docker compose -f docker-compose.prod.yml restart backend
+docker compose -f docker-compose.prod.yml restart frontend
+
+# 停止服务
+docker compose -f docker-compose.prod.yml down
+
+# 停止并删除所有数据（包括镜像）
+docker compose -f docker-compose.prod.yml down --rmi all
+
+# 更新代码后重新部署
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+
+# 进入容器内部（调试用）
+docker compose -f docker-compose.prod.yml exec backend bash
+docker compose -f docker-compose.prod.yml exec frontend sh
+
+# 查看容器资源使用情况
+docker stats
+
+# 清理未使用的Docker资源
+docker system prune -a
+
+
+==========================================
+故障排查
+==========================================
+
+【问题1：无法访问网站】
+
+# 1. 检查容器是否运行
+docker compose -f docker-compose.prod.yml ps
+
+# 2. 检查端口是否被占用
+sudo netstat -tuln | grep -E ':(80|443|5000) '
+# 或
+sudo ss -tuln | grep -E ':(80|443|5000) '
+
+# 3. 检查防火墙规则
+# Ubuntu:
+sudo ufw status
+# CentOS:
+sudo firewall-cmd --list-all
+
+# 4. 检查阿里云安全组配置（在阿里云控制台）
+
+# 5. 检查容器日志
+docker compose -f docker-compose.prod.yml logs
+
+# 6. 测试本地访问
+curl http://localhost
+curl http://localhost:5000/api/health
+
+
+【问题2：容器无法启动】
+
+# 1. 查看详细错误日志
+docker compose -f docker-compose.prod.yml logs
+
+# 2. 检查Docker服务状态
+sudo systemctl status docker
+
+# 3. 检查磁盘空间
+df -h
+
+# 4. 检查内存使用
+free -h
+
+# 5. 尝试重新构建镜像
+docker compose -f docker-compose.prod.yml build --no-cache
+
+
+【问题3：构建镜像失败】
+
+# 1. 检查网络连接
+ping registry.cn-hangzhou.aliyuncs.com
+
+# 2. 检查Docker镜像加速配置
+cat /etc/docker/daemon.json
+
+# 3. 手动拉取基础镜像测试
+docker pull python:3.11-slim
+docker pull node:18-alpine
+docker pull nginx:alpine
+
+# 4. 清理Docker缓存后重试
+docker system prune -a
+docker compose -f docker-compose.prod.yml build --no-cache
+
+
+【问题4：端口被占用】
+
+# 1. 查找占用端口的进程
+sudo lsof -i :80
+sudo lsof -i :5000
+
+# 2. 停止占用端口的服务（根据实际情况）
+# 例如停止nginx：
+# sudo systemctl stop nginx
+
+# 3. 或修改.env文件中的端口配置
+# 将FRONTEND_PORT_HTTP改为8080等
+
+
+【问题5：权限问题】
+
+# 如果遇到权限错误，确保：
+# 1. 用户已添加到docker组
+groups
+
+# 2. 如果不在docker组，执行：
+sudo usermod -aG docker $USER
+newgrp docker
+
+# 3. 或使用sudo执行命令
+sudo docker compose -f docker-compose.prod.yml up -d
+
+
+【问题6：CORS跨域问题】
+
+# 如果前端无法访问后端API，检查CORS配置：
+
+# 1. 查看.env文件中的CORS_ORIGINS配置
+cat .env | grep CORS_ORIGINS
+
+# 2. 如果通过IP访问，确保设置为*或包含您的IP
+# CORS_ORIGINS=*
+# 或
+# CORS_ORIGINS=http://your-server-ip
+
+# 3. 修改后重启后端服务
+docker compose -f docker-compose.prod.yml restart backend
+
+
+==========================================
+性能优化建议
+==========================================
+
+# 1. 根据服务器配置调整资源限制
+# 编辑.env文件，调整以下参数：
+# - GUNICORN_WORKERS: 1核服务器用2，2核服务器用4
+# - BACKEND_MEMORY_LIMIT: 根据服务器内存调整
+# - FRONTEND_MEMORY_LIMIT: 通常256M足够
+
+# 2. 定期清理Docker资源
+docker system prune -a
+
+# 3. 监控资源使用
+docker stats
+
+# 4. 查看日志文件大小
+du -sh logs/
+
+
+==========================================
+安全建议
+==========================================
+
+1. 定期更新系统和Docker
+   sudo apt-get update && sudo apt-get upgrade  # Ubuntu
+   sudo yum update -y  # CentOS
+
+2. 使用强密码和SSH密钥登录
+
+3. 定期备份重要数据
+
+4. 监控日志，及时发现异常
+
+5. 生产环境建议配置HTTPS（需要域名）
+
+6. 限制CORS来源（生产环境不要使用*）
+
+
+==========================================
+部署完成检查清单
+==========================================
+
+□ Docker和Docker Compose已安装并运行
+□ 防火墙已配置（服务器防火墙 + 阿里云安全组）
+□ 项目代码已从GitHub克隆
+□ .env配置文件已创建并配置
+□ Docker镜像已成功构建
+□ 容器已启动并运行
+□ 后端API健康检查通过（curl http://localhost:5000/api/health）
+□ 前端可以访问（curl http://localhost）
+□ 可以通过浏览器访问（http://your-server-ip）
+□ 日志无错误信息
+
+
+==========================================
+获取帮助
+==========================================
+
+如果遇到问题，请检查：
+1. 服务器系统日志: journalctl -xe
+2. Docker日志: docker compose -f docker-compose.prod.yml logs
+3. 应用日志: logs/backend/ 目录
+4. 容器状态: docker compose -f docker-compose.prod.yml ps
+
+常见问题解决方案请参考"故障排查"部分。
+
+
+==========================================
+快速参考命令
+==========================================
+
+# 一键部署（如果已配置好环境）
+cd /path/to/query-generator
+./deploy.sh
+
+# 查看服务状态
+docker compose -f docker-compose.prod.yml ps
+
+# 查看日志
+docker compose -f docker-compose.prod.yml logs -f
+
+# 重启服务
+docker compose -f docker-compose.prod.yml restart
+
+# 更新代码
+git pull && docker compose -f docker-compose.prod.yml up -d --build
+
+# 停止服务
+docker compose -f docker-compose.prod.yml down
+
+
+==========================================
+部署完成！
+==========================================
+
+部署成功后，您可以通过以下方式访问应用：
+
+http://YOUR_SERVER_IP
+
+（将YOUR_SERVER_IP替换为您的阿里云服务器公网IP）
+
+祝您使用愉快！
