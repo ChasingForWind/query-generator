@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: query-generator-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=false
+    networks:
+      - query-generator-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: query-generator-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - query-generator-network
+    restart: unless-stopped
+
+networks:
+  query-generator-network:
+    driver: bridge
+

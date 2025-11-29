@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: query-generator-backend-dev
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      # 映射源代码目录，修改代码后立即生效（无需重新构建）
+      - ./backend:/app
+    networks:
+      - query-generator-network
+    restart: unless-stopped
+    # Flask debug 模式会自动检测代码变化并重载
+    command: python app.py
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: query-generator-frontend-dev
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    volumes:
+      # 映射构建后的静态文件目录
+      - ./frontend/dist:/usr/share/nginx/html
+    networks:
+      - query-generator-network
+    restart: unless-stopped
+
+networks:
+  query-generator-network:
+    driver: bridge
+
