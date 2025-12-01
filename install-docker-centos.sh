@@ -67,8 +67,8 @@ install_docker() {
     # 安装Docker依赖
     yum install -y yum-utils device-mapper-persistent-data lvm2
     
-    # 添加Docker官方仓库（使用阿里云镜像加速）
-    yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+    # 添加Docker官方仓库
+    yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     
     # 安装Docker CE
     yum install -y docker-ce docker-ce-cli containerd.io
@@ -83,38 +83,9 @@ install_docker() {
     echo -e "${GREEN}✓ Docker安装完成${NC}"
 }
 
-# 配置Docker镜像加速（使用阿里云镜像）
-configure_docker_mirror() {
-    echo -e "\n${BLUE}[5/7] 配置Docker镜像加速...${NC}"
-    
-    # 创建或更新daemon.json
-    mkdir -p /etc/docker
-    
-    cat > /etc/docker/daemon.json << 'EOF'
-{
-  "registry-mirrors": [
-    "https://registry.cn-hangzhou.aliyuncs.com",
-    "https://docker.mirrors.ustc.edu.cn",
-    "https://hub-mirror.c.163.com"
-  ],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  }
-}
-EOF
-    
-    # 重启Docker使配置生效
-    systemctl daemon-reload
-    systemctl restart docker
-    
-    echo -e "${GREEN}✓ Docker镜像加速配置完成${NC}"
-}
-
 # 安装Docker Compose
 install_docker_compose() {
-    echo -e "\n${BLUE}[6/7] 安装Docker Compose...${NC}"
+    echo -e "\n${BLUE}[5/7] 安装Docker Compose...${NC}"
     
     # 安装Docker Compose插件（推荐方式）
     yum install -y docker-compose-plugin
@@ -127,7 +98,7 @@ install_docker_compose() {
 
 # 配置防火墙
 configure_firewall() {
-    echo -e "\n${BLUE}[7/7] 配置防火墙...${NC}"
+    echo -e "\n${BLUE}[6/7] 配置防火墙...${NC}"
     
     # 检查firewalld是否运行
     if systemctl is-active --quiet firewalld; then
@@ -152,7 +123,7 @@ configure_firewall() {
 
 # 配置用户权限
 configure_user_permissions() {
-    echo -e "\n${BLUE}配置用户权限...${NC}"
+    echo -e "\n${BLUE}[7/7] 配置用户权限...${NC}"
     
     # 获取当前登录用户（如果不是root）
     if [ -n "$SUDO_USER" ]; then
@@ -204,7 +175,6 @@ main() {
     update_system
     remove_old_docker
     install_docker
-    configure_docker_mirror
     install_docker_compose
     configure_firewall
     configure_user_permissions

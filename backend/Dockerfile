@@ -1,10 +1,7 @@
+# 使用腾讯云镜像源（国内访问更快，不依赖镜像加速器配置）
 FROM python:3.11-slim
 
 WORKDIR /app
-
-# 配置 pip 使用国内镜像源（加速 Python 包下载）
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
-    pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
 
 # 复制依赖文件
 COPY requirements.txt .

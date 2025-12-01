@@ -3,12 +3,6 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# 配置 npm 使用国内镜像源（加速 Node 包下载）
-RUN npm config set registry https://registry.npmmirror.com && \
-    npm config set fetch-retries 3 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000
-
 # 复制 package 文件（利用 Docker 缓存层）
 COPY package.json ./
 
