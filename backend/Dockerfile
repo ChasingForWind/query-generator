@@ -3,6 +3,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# 配置 pip 镜像源
+# 香港服务器使用官方源或阿里云源（比清华源更稳定）
+RUN pip install --upgrade pip && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
+    pip config set global.trusted-host mirrors.aliyun.com
+
 # 复制依赖文件
 COPY requirements.txt .
 
