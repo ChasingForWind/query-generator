@@ -72,9 +72,14 @@
         <div class="query-card">
           <div class="query-header">
             <h2>MySQL 查询</h2>
-            <button @click="copyToClipboard(queries.mysql, 'mysql')" class="copy-btn">
-              {{ copyStatus.mysql ? '已复制!' : '复制' }}
-            </button>
+            <div class="action-buttons">
+              <button @click="copyToClipboard(queries.mysql, 'mysql')" class="copy-btn">
+                {{ copyStatus.mysql ? '已复制!' : '复制' }}
+              </button>
+              <button @click="copyAndJump(queries.mysql, 'mysql')" class="jump-btn" :disabled="!queries.mysql">
+                跳转
+              </button>
+            </div>
           </div>
           <pre class="query-content"><code>{{ queries.mysql || '等待输入...' }}</code></pre>
         </div>
@@ -83,9 +88,14 @@
         <div class="query-card">
           <div class="query-header">
             <h2>Elasticsearch 查询</h2>
-            <button @click="copyToClipboard(queries.es, 'es')" class="copy-btn">
-              {{ copyStatus.es ? '已复制!' : '复制' }}
-            </button>
+            <div class="action-buttons">
+              <button @click="copyToClipboard(queries.es, 'es')" class="copy-btn">
+                {{ copyStatus.es ? '已复制!' : '复制' }}
+              </button>
+              <button @click="copyAndJump(queries.es, 'es')" class="jump-btn" :disabled="!queries.es">
+                跳转
+              </button>
+            </div>
           </div>
           <pre class="query-content"><code>{{ queries.es || '等待输入...' }}</code></pre>
         </div>
@@ -94,9 +104,14 @@
         <div class="query-card">
           <div class="query-header">
             <h2>API 请求</h2>
-            <button @click="copyToClipboard(queries.api, 'api')" class="copy-btn">
-              {{ copyStatus.api ? '已复制!' : '复制' }}
-            </button>
+            <div class="action-buttons">
+              <button @click="copyToClipboard(queries.api, 'api')" class="copy-btn">
+                {{ copyStatus.api ? '已复制!' : '复制' }}
+              </button>
+              <button @click="copyAndJump(queries.api, 'api')" class="jump-btn" :disabled="!queries.api">
+                跳转
+              </button>
+            </div>
           </div>
           <pre class="query-content"><code>{{ queries.api || '等待输入...' }}</code></pre>
         </div>
@@ -105,9 +120,14 @@
         <div class="query-card">
           <div class="query-header">
             <h2>Log 查询 - 置灰拦截</h2>
-            <button @click="copyToClipboard(queries.log1, 'log1')" class="copy-btn">
-              {{ copyStatus.log1 ? '已复制!' : '复制' }}
-            </button>
+            <div class="action-buttons">
+              <button @click="copyToClipboard(queries.log1, 'log1')" class="copy-btn">
+                {{ copyStatus.log1 ? '已复制!' : '复制' }}
+              </button>
+              <button @click="copyAndJump(queries.log1, 'log1')" class="jump-btn" :disabled="!queries.log1">
+                跳转
+              </button>
+            </div>
           </div>
           <pre class="query-content"><code>{{ queries.log1 || '等待输入...' }}</code></pre>
         </div>
@@ -116,9 +136,14 @@
         <div class="query-card">
           <div class="query-header">
             <h2>Log 查询 - 下游接口查询ES bool值构造</h2>
-            <button @click="copyToClipboard(queries.log2, 'log2')" class="copy-btn">
-              {{ copyStatus.log2 ? '已复制!' : '复制' }}
-            </button>
+            <div class="action-buttons">
+              <button @click="copyToClipboard(queries.log2, 'log2')" class="copy-btn">
+                {{ copyStatus.log2 ? '已复制!' : '复制' }}
+              </button>
+              <button @click="copyAndJump(queries.log2, 'log2')" class="jump-btn" :disabled="!queries.log2">
+                跳转
+              </button>
+            </div>
           </div>
           <pre class="query-content"><code>{{ queries.log2 || '等待输入...' }}</code></pre>
         </div>
@@ -156,7 +181,33 @@ export default {
         log2: false
       },
       debounceTimer: null,
-      textParseTimer: null
+      textParseTimer: null,
+      // 跳转URL配置
+      // 配置说明：
+      // 1. 如果配置了URL，点击"跳转"按钮会先复制内容，然后在新标签页打开配置的URL
+      // 2. 查询内容会作为URL参数传递（参数名：query）
+      // 3. 对于log1和log2，查询内容会合并到Kibana的查询参数中
+      // 4. 可以通过 window.JUMP_URLS 全局变量覆盖这些配置（在index.html中设置）
+      jumpUrls: (() => {
+        // 优先使用全局配置（如果存在）
+        if (typeof window !== 'undefined' && window.JUMP_URLS) {
+          return {
+            mysql: window.JUMP_URLS.mysql || '',
+            es: window.JUMP_URLS.es || '',
+            api: window.JUMP_URLS.api || '',
+            log1: window.JUMP_URLS.log1 || '',
+            log2: window.JUMP_URLS.log2 || ''
+          }
+        }
+        // 默认配置
+        return {
+          mysql: 'https://easydb.pdd.net/query2?cluster_name=172.20.135.180%3A3306&database_name=pdd_alioth&instance_type=single&table_name=auto_compare_report&type=MySQL',
+          es: 'https://easydb.pdd.net/query2?cluster_name=pes-goods5-report-error-st5&table_name=ascend-error-pair-search-es&type=ES',
+          api: 'https://dove.pdd.net/document/app/ascend-api/dubbo/api/com.pinduoduo.ascend.contract.dubbo.api.QueryService%23queryReportedPair(java.util.List%3Ccom.pinduoduo.ascend.contract.dubbo.model.request.ReportedPairStatusRequest%3E)?env=prod&hostGroup=def&search=queryReported&tab=1&version=30581678',
+          log1: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22checkGreyPair%20request%20is%20:%20%22\'),sort:!(!(\'@timestamp\',desc)))',
+          log2: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22buildQueryCore%20result:%22\'),sort:!(!(\'@timestamp\',desc)))'
+        }
+      })()
     }
   },
   methods: {
@@ -273,6 +324,83 @@ export default {
           console.error('复制失败:', err)
         }
         document.body.removeChild(textArea)
+      }
+    },
+    
+    async copyAndJump(text, type) {
+      if (!text) return
+      
+      // 先复制到剪贴板
+      await this.copyToClipboard(text, type)
+      
+      // 获取配置的跳转URL
+      const jumpUrl = this.jumpUrls[type]
+      
+      if (jumpUrl && jumpUrl.trim()) {
+        // 如果配置了URL，则跳转
+        try {
+          let finalUrl = jumpUrl
+          
+          // 对于log1和log2（Kibana），需要将查询内容合并到Kibana的query参数中
+          if (type === 'log1' || type === 'log2') {
+            // Kibana URL格式：query:(language:kuery,query:'...')
+            // 生成的查询已经是完整的KQL查询语句，直接替换URL中的query参数
+            
+            // 提取query参数部分：query:(language:kuery,query:'...')
+            // URL中query参数是编码后的，例如：query:(language:kuery,query:'%22checkGreyPair%20request%20is%20:%20%22')
+            const queryMatch = jumpUrl.match(/query:\(language:kuery,query:'([^']+)'\)/)
+            if (queryMatch) {
+              // 将生成的查询内容进行URL编码
+              // 生成的查询格式：'"hasErrorRecord: found error pairDTO" and "123" and "456"'
+              const encodedQuery = encodeURIComponent(text)
+              // 替换URL中的query参数（保持原有格式）
+              finalUrl = jumpUrl.replace(/query:\(language:kuery,query:'([^']+)'\)/, `query:(language:kuery,query:'${encodedQuery}')`)
+            } else {
+              // 如果无法解析，尝试更宽松的匹配
+              const encodedQuery = encodeURIComponent(text)
+              // 尝试替换整个query部分
+              finalUrl = jumpUrl.replace(/query:\(language:kuery,query:'[^']+'\)/, `query:(language:kuery,query:'${encodedQuery}')`)
+            }
+          } else {
+            // 对于其他类型，将查询内容作为query参数添加
+            const encodedQuery = encodeURIComponent(text)
+            finalUrl = jumpUrl.includes('?') 
+              ? `${jumpUrl}&query=${encodedQuery}` 
+              : `${jumpUrl}?query=${encodedQuery}`
+          }
+          
+          // 在新标签页打开
+          window.open(finalUrl, '_blank')
+        } catch (error) {
+          console.error('跳转失败:', error)
+          // 如果URL格式有问题，直接打开配置的URL
+          window.open(jumpUrl, '_blank')
+        }
+      } else {
+        // 如果没有配置URL，根据类型打开默认工具或提示
+        this.openDefaultTool(type, text)
+      }
+    },
+    
+    openDefaultTool(type, text) {
+      // 根据查询类型打开默认工具或提示用户
+      const typeNames = {
+        mysql: 'MySQL查询工具',
+        es: 'Elasticsearch Dev Tools（如Kibana）',
+        api: 'API测试工具（如Postman）',
+        log1: '日志查询系统（如Kibana Discover）',
+        log2: '日志查询系统（如Kibana Discover）'
+      }
+      
+      const typeName = typeNames[type] || '对应工具'
+      
+      // 提示用户已复制，可以手动粘贴到工具中
+      const message = `已复制到剪贴板！\n\n请打开 ${typeName}，然后粘贴查询内容。\n\n提示：您可以在代码中配置跳转URL，实现一键跳转。\n\n配置方法：\n1. 修改 frontend/src/components/QueryGenerator.vue 中的 jumpUrls 对象\n2. 或在 index.html 中设置 window.JUMP_URLS 全局变量`
+      
+      // 使用 confirm 让用户选择是否继续
+      if (confirm(message + '\n\n是否现在打开新标签页以便手动粘贴？')) {
+        // 打开空白新标签页，用户可以手动访问工具
+        window.open('about:blank', '_blank')
       }
     }
   }
@@ -392,6 +520,12 @@ export default {
   font-weight: 600;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .copy-btn {
   padding: 8px 16px;
   background: #667eea;
@@ -411,6 +545,33 @@ export default {
 
 .copy-btn:active {
   transform: translateY(0);
+}
+
+.jump-btn {
+  padding: 8px 16px;
+  background: #48bb78;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.jump-btn:hover:not(:disabled) {
+  background: #38a169;
+  transform: translateY(-1px);
+}
+
+.jump-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.jump-btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .query-content {
