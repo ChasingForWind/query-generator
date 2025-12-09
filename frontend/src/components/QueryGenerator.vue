@@ -244,8 +244,10 @@
                 <tr>
                   <th>左 goodsId</th>
                   <th>左 skuId</th>
+                  <th>套餐Id</th>
                   <th>右 goodsId</th>
                   <th>右 skuId</th>
+                  <th>平台</th>
                   <th>报错人</th>
                   <th>报错时间</th>
                   <th>审核时间</th>
@@ -257,8 +259,10 @@
                 <tr v-for="(row, index) in esParserItems" :key="index">
                   <td>{{ row.leftGoodsId || '-' }}</td>
                   <td>{{ row.leftSkuId || '-' }}</td>
+                  <td>{{ row.productId || '-' }}</td>
                   <td>{{ row.rightGoodsId || '-' }}</td>
                   <td>{{ row.rightSkuId || '-' }}</td>
+                  <td>{{ row.platform || '-' }}</td>
                   <td>{{ row.reporter || '-' }}</td>
                   <td>{{ row.reportTime || '-' }}</td>
                   <td>{{ row.verifyTime || '-' }}</td>
@@ -609,8 +613,10 @@ export default {
           return {
             leftGoodsId: source.origin_goods_id || '',
             leftSkuId: source.origin_sku_id || '',
+            productId: source.product_id || '',
             rightGoodsId: source.similar_goods_id || '',
             rightSkuId: source.similar_sku_id || '',
+            platform: source.similar_platform_str || '',
             reporter: source.reporter || '',
             reportTime: this.formatDate(source.report_time),
             verifyTime: this.formatDate(source.verify_time),
