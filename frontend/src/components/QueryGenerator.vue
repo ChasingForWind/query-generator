@@ -2,150 +2,272 @@
   <div class="query-generator">
     <div class="container">
       <h1 class="title">报错pair查询语句生成器</h1>
-      
-      <!-- 文本解析输入区域 -->
-      <div class="text-parser-section">
-        <div class="input-group full-width">
-          <label for="textInput">粘贴文本自动解析</label>
-          <textarea
-            id="textInput"
-            v-model="textInput"
-            class="text-input"
-            placeholder="请粘贴包含商品信息的文本，系统将自动解析并填充以下字段..."
-            rows="6"
-            @input="handleTextInput"
-            @paste="handleTextInput"
-          ></textarea>
-        </div>
-      </div>
-      
-      <!-- 输入区域 -->
-      <div class="input-section">
-        <div class="input-group">
-          <label for="goodsId">Goods ID</label>
-          <input
-            id="goodsId"
-            v-model="formData.goodsId"
-            type="text"
-            placeholder="请输入 goodsId"
-            @input="handleInputChange"
-          />
-        </div>
-        
-        <div class="input-group">
-          <label for="skuId">SKU ID</label>
-          <input
-            id="skuId"
-            v-model="formData.skuId"
-            type="text"
-            placeholder="请输入 skuId"
-            @input="handleInputChange"
-          />
-        </div>
-        
-        <div class="input-group">
-          <label for="simGoodsId">Sim Goods ID</label>
-          <input
-            id="simGoodsId"
-            v-model="formData.simGoodsId"
-            type="text"
-            placeholder="请输入 simGoodsId"
-            @input="handleInputChange"
-          />
-        </div>
-        
-        <div class="input-group">
-          <label for="simSkuId">Sim SKU ID</label>
-          <input
-            id="simSkuId"
-            v-model="formData.simSkuId"
-            type="text"
-            placeholder="请输入 simSkuId"
-            @input="handleInputChange"
-          />
-        </div>
+
+      <div class="tabs">
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'generator' }"
+          @click="activeTab = 'generator'"
+        >
+          查询生成
+        </button>
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'esParser' }"
+          @click="activeTab = 'esParser'"
+        >
+          报错ES数据反解析
+        </button>
       </div>
 
-      <!-- 查询结果区域 -->
-      <div class="results-section">
-        <!-- MySQL 查询 -->
-        <div class="query-card">
-          <div class="query-header">
-            <h2>MySQL 查询</h2>
-            <div class="action-buttons">
-              <button @click="copyToClipboard(queries.mysql, 'mysql')" class="copy-btn">
-                {{ copyStatus.mysql ? '已复制!' : '复制' }}
-              </button>
-              <button @click="copyAndJump(queries.mysql, 'mysql')" class="jump-btn" :disabled="!queries.mysql">
-                跳转
-              </button>
-            </div>
+      <div v-if="activeTab === 'generator'">
+        <!-- 文本解析输入区域 -->
+        <div class="text-parser-section">
+          <div class="input-group full-width">
+            <label for="textInput">粘贴文本自动解析</label>
+            <textarea
+              id="textInput"
+              v-model="textInput"
+              class="text-input"
+              placeholder="请粘贴包含商品信息的文本，系统将自动解析并填充以下字段..."
+              rows="6"
+              @input="handleTextInput"
+              @paste="handleTextInput"
+            ></textarea>
           </div>
-          <pre class="query-content"><code>{{ queries.mysql || '等待输入...' }}</code></pre>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="input-section">
+          <div class="input-group">
+            <label for="goodsId">Goods ID</label>
+            <input
+              id="goodsId"
+              v-model="formData.goodsId"
+              type="text"
+              placeholder="请输入 goodsId"
+              @input="handleInputChange"
+            />
+          </div>
+          
+          <div class="input-group">
+            <label for="skuId">SKU ID</label>
+            <input
+              id="skuId"
+              v-model="formData.skuId"
+              type="text"
+              placeholder="请输入 skuId"
+              @input="handleInputChange"
+            />
+          </div>
+          
+          <div class="input-group">
+            <label for="simGoodsId">Sim Goods ID</label>
+            <input
+              id="simGoodsId"
+              v-model="formData.simGoodsId"
+              type="text"
+              placeholder="请输入 simGoodsId"
+              @input="handleInputChange"
+            />
+          </div>
+          
+          <div class="input-group">
+            <label for="simSkuId">Sim SKU ID</label>
+            <input
+              id="simSkuId"
+              v-model="formData.simSkuId"
+              type="text"
+              placeholder="请输入 simSkuId"
+              @input="handleInputChange"
+            />
+          </div>
         </div>
 
-        <!-- ES 查询 -->
-        <div class="query-card">
-          <div class="query-header">
-            <h2>Elasticsearch 查询</h2>
-            <div class="action-buttons">
-              <button @click="copyToClipboard(queries.es, 'es')" class="copy-btn">
-                {{ copyStatus.es ? '已复制!' : '复制' }}
-              </button>
-              <button @click="copyAndJump(queries.es, 'es')" class="jump-btn" :disabled="!queries.es">
-                跳转
-              </button>
+        <!-- 查询结果区域 -->
+        <div class="results-section">
+          <!-- MySQL 查询 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>MySQL 查询</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.mysql, 'mysql')" class="copy-btn">
+                  {{ copyStatus.mysql ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.mysql, 'mysql')" class="jump-btn" :disabled="!queries.mysql">
+                  跳转
+                </button>
+              </div>
             </div>
+            <pre class="query-content"><code>{{ queries.mysql || '等待输入...' }}</code></pre>
           </div>
-          <pre class="query-content"><code>{{ queries.es || '等待输入...' }}</code></pre>
+
+          <!-- ES 查询 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>Elasticsearch 查询</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.es, 'es')" class="copy-btn">
+                  {{ copyStatus.es ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.es, 'es')" class="jump-btn" :disabled="!queries.es">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.es || '等待输入...' }}</code></pre>
+          </div>
+
+          <!-- API 请求 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>API 请求</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.api, 'api')" class="copy-btn">
+                  {{ copyStatus.api ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.api, 'api')" class="jump-btn" :disabled="!queries.api">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.api || '等待输入...' }}</code></pre>
+          </div>
+
+          <!-- Log 查询 1 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>Log 查询 - 置灰拦截</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.log1, 'log1')" class="copy-btn">
+                  {{ copyStatus.log1 ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.log1, 'log1')" class="jump-btn" :disabled="!queries.log1">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.log1 || '等待输入...' }}</code></pre>
+          </div>
+
+          <!-- Log 查询 2 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>Log 查询 - 下游接口查询ES bool值构造</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.log2, 'log2')" class="copy-btn">
+                  {{ copyStatus.log2 ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.log2, 'log2')" class="jump-btn" :disabled="!queries.log2">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.log2 || '等待输入...' }}</code></pre>
+          </div>
+
+          <!-- MySQL 黑名单 goods 维度 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>MySQL 黑名单 - goods 维度</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.mysqlBlackGoods, 'mysqlBlackGoods')" class="copy-btn">
+                  {{ copyStatus.mysqlBlackGoods ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.mysqlBlackGoods, 'mysqlBlackGoods')" class="jump-btn" :disabled="!queries.mysqlBlackGoods">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.mysqlBlackGoods || '等待输入...' }}</code></pre>
+          </div>
+
+          <!-- MySQL 黑名单 pair 维度 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>MySQL 黑名单 - pair 维度</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.mysqlBlackPair, 'mysqlBlackPair')" class="copy-btn">
+                  {{ copyStatus.mysqlBlackPair ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.mysqlBlackPair, 'mysqlBlackPair')" class="jump-btn" :disabled="!queries.mysqlBlackPair">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.mysqlBlackPair || '等待输入...' }}</code></pre>
+          </div>
+
+          <!-- 入库日志查询 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>入库日志查询</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.log3, 'log3')" class="copy-btn">
+                  {{ copyStatus.log3 ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.log3, 'log3')" class="jump-btn" :disabled="!queries.log3">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.log3 || '等待输入...' }}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="es-parser-section">
+        <div class="text-parser-section">
+          <div class="input-group full-width">
+            <label for="esParserInput">粘贴 ES 返回 JSON</label>
+            <textarea
+              id="esParserInput"
+              v-model="esParserInput"
+              class="text-input"
+              placeholder="粘贴 Kibana/ES 返回的 JSON（包含 hits.hits ）"
+              rows="12"
+            ></textarea>
+          </div>
         </div>
 
-        <!-- API 请求 -->
-        <div class="query-card">
-          <div class="query-header">
-            <h2>API 请求</h2>
-            <div class="action-buttons">
-              <button @click="copyToClipboard(queries.api, 'api')" class="copy-btn">
-                {{ copyStatus.api ? '已复制!' : '复制' }}
-              </button>
-              <button @click="copyAndJump(queries.api, 'api')" class="jump-btn" :disabled="!queries.api">
-                跳转
-              </button>
-            </div>
-          </div>
-          <pre class="query-content"><code>{{ queries.api || '等待输入...' }}</code></pre>
+        <div class="parser-actions">
+          <button class="copy-btn" @click="parseEsData">解析</button>
+          <button class="jump-btn" @click="clearEsParser">清空</button>
         </div>
 
-        <!-- Log 查询 1 -->
-        <div class="query-card">
-          <div class="query-header">
-            <h2>Log 查询 - 置灰拦截</h2>
-            <div class="action-buttons">
-              <button @click="copyToClipboard(queries.log1, 'log1')" class="copy-btn">
-                {{ copyStatus.log1 ? '已复制!' : '复制' }}
-              </button>
-              <button @click="copyAndJump(queries.log1, 'log1')" class="jump-btn" :disabled="!queries.log1">
-                跳转
-              </button>
-            </div>
+        <div class="parser-result">
+          <div v-if="esParserError" class="error-text">{{ esParserError }}</div>
+          <div v-else-if="!esParserItems.length" class="placeholder-text">等待解析数据...</div>
+          <div v-else class="table-wrapper">
+            <table class="parser-table">
+              <thead>
+                <tr>
+                  <th>左 goodsId</th>
+                  <th>左 skuId</th>
+                  <th>右 goodsId</th>
+                  <th>右 skuId</th>
+                  <th>报错人</th>
+                  <th>报错时间</th>
+                  <th>审核时间</th>
+                  <th>当前状态</th>
+                  <th>审核状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, index) in esParserItems" :key="index">
+                  <td>{{ row.leftGoodsId || '-' }}</td>
+                  <td>{{ row.leftSkuId || '-' }}</td>
+                  <td>{{ row.rightGoodsId || '-' }}</td>
+                  <td>{{ row.rightSkuId || '-' }}</td>
+                  <td>{{ row.reporter || '-' }}</td>
+                  <td>{{ row.reportTime || '-' }}</td>
+                  <td>{{ row.verifyTime || '-' }}</td>
+                  <td>{{ row.status || '-' }}</td>
+                  <td>{{ row.verifyResult || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <pre class="query-content"><code>{{ queries.log1 || '等待输入...' }}</code></pre>
-        </div>
-
-        <!-- Log 查询 2 -->
-        <div class="query-card">
-          <div class="query-header">
-            <h2>Log 查询 - 下游接口查询ES bool值构造</h2>
-            <div class="action-buttons">
-              <button @click="copyToClipboard(queries.log2, 'log2')" class="copy-btn">
-                {{ copyStatus.log2 ? '已复制!' : '复制' }}
-              </button>
-              <button @click="copyAndJump(queries.log2, 'log2')" class="jump-btn" :disabled="!queries.log2">
-                跳转
-              </button>
-            </div>
-          </div>
-          <pre class="query-content"><code>{{ queries.log2 || '等待输入...' }}</code></pre>
         </div>
       </div>
     </div>
@@ -159,6 +281,7 @@ export default {
   name: 'QueryGenerator',
   data() {
     return {
+      activeTab: 'generator',
       textInput: '',
       formData: {
         goodsId: '',
@@ -171,15 +294,24 @@ export default {
         es: '',
         api: '',
         log1: '',
-        log2: ''
+        log2: '',
+        mysqlBlackGoods: '',
+        mysqlBlackPair: '',
+        log3: ''
       },
       copyStatus: {
         mysql: false,
         es: false,
         api: false,
         log1: false,
-        log2: false
+        log2: false,
+        mysqlBlackGoods: false,
+        mysqlBlackPair: false,
+        log3: false
       },
+      esParserInput: '',
+      esParserItems: [],
+      esParserError: '',
       debounceTimer: null,
       textParseTimer: null,
       // 跳转URL配置
@@ -196,7 +328,10 @@ export default {
             es: window.JUMP_URLS.es || '',
             api: window.JUMP_URLS.api || '',
             log1: window.JUMP_URLS.log1 || '',
-            log2: window.JUMP_URLS.log2 || ''
+            log2: window.JUMP_URLS.log2 || '',
+            mysqlBlackGoods: window.JUMP_URLS.mysqlBlackGoods || '',
+            mysqlBlackPair: window.JUMP_URLS.mysqlBlackPair || '',
+            log3: window.JUMP_URLS.log3 || ''
           }
         }
         // 默认配置
@@ -205,12 +340,28 @@ export default {
           es: 'https://easydb.pdd.net/query2?cluster_name=pes-goods5-report-error-st5&table_name=ascend-error-pair-search-es&type=ES',
           api: 'https://dove.pdd.net/document/app/ascend-api/dubbo/api/com.pinduoduo.ascend.contract.dubbo.api.QueryService%23queryReportedPair(java.util.List%3Ccom.pinduoduo.ascend.contract.dubbo.model.request.ReportedPairStatusRequest%3E)?env=prod&hostGroup=def&search=queryReported&tab=1&version=30581678',
           log1: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22checkGreyPair%20request%20is%20:%20%22\'),sort:!(!(\'@timestamp\',desc)))',
-          log2: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22buildQueryCore%20result:%22\'),sort:!(!(\'@timestamp\',desc)))'
+          log2: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22buildQueryCore%20result:%22\'),sort:!(!(\'@timestamp\',desc)))',
+          mysqlBlackGoods: 'https://easydb.pdd.net/query2?cluster_name=10.220.102.6%3A3326&database_name=ascend&instance_type=single&table_name=report_error_black_goods&type=MySQL',
+          mysqlBlackPair: 'https://easydb.pdd.net/query2?cluster_name=10.220.102.6%3A3326&database_name=ascend&instance_type=single&table_name=report_error_black_pair&type=MySQL',
+          log3: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22manualReport%20req:%22%20and%20%22%22%20and%20%22%22%20and%20%22%22%20and%20%22%22\'),sort:!(!(\'@timestamp\',desc)))'
         }
       })()
     }
   },
   methods: {
+    getEmptyQueries() {
+      return {
+        mysql: '',
+        es: '',
+        api: '',
+        log1: '',
+        log2: '',
+        mysqlBlackGoods: '',
+        mysqlBlackPair: '',
+        log3: ''
+      }
+    },
+    
     handleTextInput() {
       // 防抖处理，避免频繁解析
       clearTimeout(this.textParseTimer)
@@ -276,23 +427,25 @@ export default {
       // 如果所有输入都为空，清空结果
       if (!this.formData.goodsId && !this.formData.skuId && 
           !this.formData.simGoodsId && !this.formData.simSkuId) {
-        this.queries = {
-          mysql: '',
-          es: '',
-          api: '',
-          log1: '',
-          log2: ''
-        }
+        this.queries = this.getEmptyQueries()
         return
       }
 
+      let newQueries = this.getEmptyQueries()
+
       try {
         const response = await axios.post('/api/generate', this.formData)
-        this.queries = response.data
+        newQueries = { ...newQueries, ...(response.data || {}) }
       } catch (error) {
         console.error('生成查询语句失败:', error)
         // 可以添加错误提示
       }
+
+      newQueries.mysqlBlackGoods = this.buildMysqlBlackGoodsQuery()
+      newQueries.mysqlBlackPair = this.buildMysqlBlackPairQuery()
+      newQueries.log3 = this.buildLog3Query()
+
+      this.queries = newQueries
     },
     
     async copyToClipboard(text, type) {
@@ -341,8 +494,8 @@ export default {
         try {
           let finalUrl = jumpUrl
           
-          // 对于log1和log2（Kibana），需要将查询内容合并到Kibana的query参数中
-          if (type === 'log1' || type === 'log2') {
+          // 对于log类（Kibana），需要将查询内容合并到Kibana的query参数中
+          if (['log1', 'log2', 'log3'].includes(type)) {
             // Kibana URL格式：query:(language:kuery,query:'...')
             // 生成的查询已经是完整的KQL查询语句，直接替换URL中的query参数
             
@@ -386,10 +539,13 @@ export default {
       // 根据查询类型打开默认工具或提示用户
       const typeNames = {
         mysql: 'MySQL查询工具',
+        mysqlBlackGoods: 'MySQL查询工具',
+        mysqlBlackPair: 'MySQL查询工具',
         es: 'Elasticsearch Dev Tools（如Kibana）',
         api: 'API测试工具（如Postman）',
         log1: '日志查询系统（如Kibana Discover）',
-        log2: '日志查询系统（如Kibana Discover）'
+        log2: '日志查询系统（如Kibana Discover）',
+        log3: '日志查询系统（如Kibana Discover）'
       }
       
       const typeName = typeNames[type] || '对应工具'
@@ -402,6 +558,114 @@ export default {
         // 打开空白新标签页，用户可以手动访问工具
         window.open('about:blank', '_blank')
       }
+    },
+
+    buildMysqlBlackGoodsQuery() {
+      if (!this.formData.goodsId) return ''
+      return "SELECT * FROM `report_error_black_goods` WHERE goods_id = '" + this.formData.goodsId + "' LIMIT 50;"
+    },
+
+    buildMysqlBlackPairQuery() {
+      if (!this.formData.goodsId && !this.formData.simGoodsId) return ''
+      const origin = this.formData.goodsId || ''
+      const similar = this.formData.simGoodsId || ''
+      return "SELECT * FROM `report_error_black_pair` WHERE origin_goods_id = '" + origin + "' AND similar_goods_id = '" + similar + "' LIMIT 50;"
+    },
+
+    buildLog3Query() {
+      if (!this.formData.goodsId && !this.formData.skuId && !this.formData.simGoodsId && !this.formData.simSkuId) {
+        return ''
+      }
+      const parts = [
+        'manualReport req:',
+        this.formData.goodsId || '',
+        this.formData.skuId || '',
+        this.formData.simGoodsId || '',
+        this.formData.simSkuId || ''
+      ]
+      return parts.map(item => `"${item}"`).join(' and ')
+    },
+
+    parseEsData() {
+      this.esParserError = ''
+      this.esParserItems = []
+
+      if (!this.esParserInput || !this.esParserInput.trim()) {
+        this.esParserError = '请输入 ES 返回的 JSON 数据'
+        return
+      }
+
+      try {
+        const json = JSON.parse(this.esParserInput)
+        const hits = json?.hits?.hits
+
+        if (!Array.isArray(hits) || !hits.length) {
+          this.esParserError = '未找到 hits.hits 数据'
+          return
+        }
+
+        const rows = hits.map(hit => {
+          const source = hit._source || {}
+          return {
+            leftGoodsId: source.origin_goods_id || '',
+            leftSkuId: source.origin_sku_id || '',
+            rightGoodsId: source.similar_goods_id || '',
+            rightSkuId: source.similar_sku_id || '',
+            reporter: source.reporter || '',
+            reportTime: this.formatDate(source.report_time),
+            verifyTime: this.formatDate(source.verify_time),
+            status: this.mapStatus(source.status),
+            verifyResult: this.mapVerifyResult(source.verify_result)
+          }
+        }).filter(item => item.leftGoodsId || item.rightGoodsId)
+
+        if (!rows.length) {
+          this.esParserError = '未解析到有效的 pair 数据'
+          return
+        }
+
+        this.esParserItems = rows
+      } catch (error) {
+        this.esParserError = `解析失败：${error.message}`
+      }
+    },
+
+    clearEsParser() {
+      this.esParserInput = ''
+      this.esParserItems = []
+      this.esParserError = ''
+    },
+
+    formatDate(value) {
+      if (!value && value !== 0) return ''
+      const num = Number(value)
+      if (!Number.isFinite(num)) return ''
+      const millis = num > 1e12 ? num : num * 1000
+      const date = new Date(millis)
+      if (Number.isNaN(date.getTime())) return ''
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
+    },
+
+    mapStatus(status) {
+      const map = {
+        0: '不生效',
+        1: '生效-剔除不比',
+        2: '生效-不剔除，套餐重新比价',
+        3: '生效-不剔除，历史比价场景，用新价格比价'
+      }
+      return map[status] || ''
+    },
+
+    mapVerifyResult(result) {
+      const map = {
+        0: '待审核',
+        1: '审核通过',
+        2: '审核不通过'
+      }
+      return map[result] || ''
     }
   }
 }
@@ -426,6 +690,32 @@ export default {
   margin-bottom: 40px;
   font-size: 32px;
   font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  background: #f8f9fa;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  border-color: #667eea;
+  background: #eef2ff;
+  color: #3b3bb3;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .text-parser-section {
@@ -590,6 +880,63 @@ export default {
   color: #333;
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+.es-parser-section {
+  margin-top: 12px;
+}
+
+.parser-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.parser-result {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+}
+
+.error-text {
+  color: #e53e3e;
+  font-weight: 600;
+}
+
+.placeholder-text {
+  color: #718096;
+}
+
+.table-wrapper {
+  overflow: auto;
+}
+
+.parser-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parser-table th,
+.parser-table td {
+  border: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.parser-table th {
+  background: #eef2ff;
+  color: #3b3bb3;
+  font-weight: 700;
+}
+
+.parser-table tbody tr:nth-child(odd) {
+  background: #fff;
+}
+
+.parser-table tbody tr:nth-child(even) {
+  background: #f7fafc;
 }
 
 @media (max-width: 768px) {
