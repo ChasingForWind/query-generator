@@ -213,6 +213,22 @@
             </div>
             <pre class="query-content"><code>{{ queries.log3 || '等待输入...' }}</code></pre>
           </div>
+
+          <!-- queryReportedPair 日志查询 -->
+          <div class="query-card">
+            <div class="query-header">
+              <h2>queryReportedPair 日志查询</h2>
+              <div class="action-buttons">
+                <button @click="copyToClipboard(queries.log4, 'log4')" class="copy-btn">
+                  {{ copyStatus.log4 ? '已复制!' : '复制' }}
+                </button>
+                <button @click="copyAndJump(queries.log4, 'log4')" class="jump-btn" :disabled="!queries.log4">
+                  跳转
+                </button>
+              </div>
+            </div>
+            <pre class="query-content"><code>{{ queries.log4 || '等待输入...' }}</code></pre>
+          </div>
         </div>
       </div>
 
@@ -301,7 +317,8 @@ export default {
         log2: '',
         mysqlBlackGoods: '',
         mysqlBlackPair: '',
-        log3: ''
+        log3: '',
+        log4: ''
       },
       copyStatus: {
         mysql: false,
@@ -311,7 +328,8 @@ export default {
         log2: false,
         mysqlBlackGoods: false,
         mysqlBlackPair: false,
-        log3: false
+        log3: false,
+        log4: false
       },
       esParserInput: '',
       esParserItems: [],
@@ -335,7 +353,8 @@ export default {
             log2: window.JUMP_URLS.log2 || '',
             mysqlBlackGoods: window.JUMP_URLS.mysqlBlackGoods || '',
             mysqlBlackPair: window.JUMP_URLS.mysqlBlackPair || '',
-            log3: window.JUMP_URLS.log3 || ''
+            log3: window.JUMP_URLS.log3 || '',
+            log4: window.JUMP_URLS.log4 || ''
           }
         }
         // 默认配置
@@ -347,7 +366,8 @@ export default {
           log2: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22buildQueryCore%20result:%22\'),sort:!(!(\'@timestamp\',desc)))',
           mysqlBlackGoods: 'https://easydb.pdd.net/query2?cluster_name=10.220.102.6%3A3326&database_name=ascend&instance_type=single&table_name=report_error_black_goods&type=MySQL',
           mysqlBlackPair: 'https://easydb.pdd.net/query2?cluster_name=10.220.102.6%3A3326&database_name=ascend&instance_type=single&table_name=report_error_black_pair&type=MySQL',
-          log3: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22manualReport%20req:%22%20and%20%22%22%20and%20%22%22%20and%20%22%22%20and%20%22%22\'),sort:!(!(\'@timestamp\',desc)))'
+          log3: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22manualReport%20req:%22%20and%20%22%22%20and%20%22%22%20and%20%22%22%20and%20%22%22\'),sort:!(!(\'@timestamp\',desc)))',
+          log4: 'https://log.pdd.net/app/kibana#/discover?_g=()&_a=(columns:!(_source),index:pdd-ascend-api,interval:auto,query:(language:kuery,query:\'%22queryReportedPair%20request%20is%22%20\'),sort:!(!(\'@timestamp\',desc)))'
         }
       })()
     }
@@ -362,7 +382,8 @@ export default {
         log2: '',
         mysqlBlackGoods: '',
         mysqlBlackPair: '',
-        log3: ''
+        log3: '',
+        log4: ''
       }
     },
     
@@ -448,6 +469,7 @@ export default {
       newQueries.mysqlBlackGoods = this.buildMysqlBlackGoodsQuery()
       newQueries.mysqlBlackPair = this.buildMysqlBlackPairQuery()
       newQueries.log3 = this.buildLog3Query()
+      newQueries.log4 = this.buildLog4Query()
 
       this.queries = newQueries
     },
@@ -499,7 +521,7 @@ export default {
           let finalUrl = jumpUrl
           
           // 对于log类（Kibana），需要将查询内容合并到Kibana的query参数中
-          if (['log1', 'log2', 'log3'].includes(type)) {
+          if (['log1', 'log2', 'log3', 'log4'].includes(type)) {
             // Kibana URL格式：query:(language:kuery,query:'...')
             // 生成的查询已经是完整的KQL查询语句，直接替换URL中的query参数
             
@@ -549,7 +571,8 @@ export default {
         api: 'API测试工具（如Postman）',
         log1: '日志查询系统（如Kibana Discover）',
         log2: '日志查询系统（如Kibana Discover）',
-        log3: '日志查询系统（如Kibana Discover）'
+        log3: '日志查询系统（如Kibana Discover）',
+        log4: '日志查询系统（如Kibana Discover）'
       }
       
       const typeName = typeNames[type] || '对应工具'
@@ -582,6 +605,20 @@ export default {
       }
       const parts = [
         'manualReport req:',
+        this.formData.goodsId || '',
+        this.formData.skuId || '',
+        this.formData.simGoodsId || '',
+        this.formData.simSkuId || ''
+      ]
+      return parts.map(item => `"${item}"`).join(' and ')
+    },
+
+    buildLog4Query() {
+      if (!this.formData.goodsId && !this.formData.skuId && !this.formData.simGoodsId && !this.formData.simSkuId) {
+        return ''
+      }
+      const parts = [
+        'queryReportedPair request is',
         this.formData.goodsId || '',
         this.formData.skuId || '',
         this.formData.simGoodsId || '',
