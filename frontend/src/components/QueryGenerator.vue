@@ -307,7 +307,8 @@ export default {
         goodsId: '',
         skuId: '',
         simGoodsId: '',
-        simSkuId: ''
+        simSkuId: '',
+        platformName: ''
       },
       queries: {
         mysql: '',
@@ -434,6 +435,12 @@ export default {
       const simSkuId = extractValue(/同款商品\s*sku_id\s*[:：]\s*([^\r\n]+)/i, text)
       if (simSkuId) {
         this.formData.simSkuId = simSkuId
+      }
+      
+      // 解析同款商品平台
+      const platformName = extractValue(/同款商品平台\s*[:：]\s*([^\r\n]+)/i, text)
+      if (platformName) {
+        this.formData.platformName = platformName
       }
       
       // 填充后触发查询生成

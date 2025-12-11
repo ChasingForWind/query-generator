@@ -63,7 +63,7 @@ def generate_es_query(goods_id, sku_id, sim_goods_id, sim_sku_id):
     return json.dumps(query, indent=4, ensure_ascii=False)
 
 
-def generate_api_request(goods_id, sku_id, sim_goods_id, sim_sku_id):
+def generate_api_request(goods_id, sku_id, sim_goods_id, sim_sku_id, platform_name=''):
     """
     生成API请求JSON
     
@@ -72,6 +72,7 @@ def generate_api_request(goods_id, sku_id, sim_goods_id, sim_sku_id):
         sku_id: skuId
         sim_goods_id: simGoodsId
         sim_sku_id: simSkuId
+        platform_name: platformName，如果为空则使用默认值"JD"
     
     Returns:
         格式化的JSON字符串
@@ -88,13 +89,16 @@ def generate_api_request(goods_id, sku_id, sim_goods_id, sim_sku_id):
         sim_goods_id_int = 0
         sim_sku_id_int = 0
     
+    # 如果platform_name为空，使用默认值"JD"
+    platform = platform_name.strip() if platform_name else "JD"
+    
     request_data = [
         {
             "goodsId": goods_id_int,
             "skuId": sku_id_int,
             "simGoodsId": sim_goods_id_int,
             "simSkuId": sim_sku_id_int,
-            "platformName": "JD",
+            "platformName": platform,
             "sceneCode": 2
         }
     ]
@@ -123,7 +127,7 @@ def generate_log_query(goods_id, sku_id, sim_goods_id, sim_sku_id, query_type=1)
         return f'"buildQueryCore result:" and "{goods_id}" and "{sku_id}" and "{sim_goods_id}" and "{sim_sku_id}"'
 
 
-def generate_all_queries(goods_id, sku_id, sim_goods_id, sim_sku_id):
+def generate_all_queries(goods_id, sku_id, sim_goods_id, sim_sku_id, platform_name=''):
     """
     生成所有类型的查询语句
     
@@ -132,6 +136,7 @@ def generate_all_queries(goods_id, sku_id, sim_goods_id, sim_sku_id):
         sku_id: skuId
         sim_goods_id: simGoodsId
         sim_sku_id: simSkuId
+        platform_name: platformName，如果为空则使用默认值"JD"
     
     Returns:
         包含所有查询语句的字典
@@ -139,7 +144,7 @@ def generate_all_queries(goods_id, sku_id, sim_goods_id, sim_sku_id):
     return {
         "mysql": generate_mysql_query(goods_id, sku_id, sim_goods_id, sim_sku_id),
         "es": generate_es_query(goods_id, sku_id, sim_goods_id, sim_sku_id),
-        "api": generate_api_request(goods_id, sku_id, sim_goods_id, sim_sku_id),
+        "api": generate_api_request(goods_id, sku_id, sim_goods_id, sim_sku_id, platform_name),
         "log1": generate_log_query(goods_id, sku_id, sim_goods_id, sim_sku_id, 1),
         "log2": generate_log_query(goods_id, sku_id, sim_goods_id, sim_sku_id, 2)
     }

@@ -71,9 +71,10 @@ def generate_queries():
         sku_id = data.get('skuId', '') or ''
         sim_goods_id = data.get('simGoodsId', '') or ''
         sim_sku_id = data.get('simSkuId', '') or ''
+        platform_name = data.get('platformName', '') or ''
         
         # 生成所有查询语句
-        queries = generate_all_queries(goods_id, sku_id, sim_goods_id, sim_sku_id)
+        queries = generate_all_queries(goods_id, sku_id, sim_goods_id, sim_sku_id, platform_name)
         
         logger.info(f"成功生成查询语句: goodsId={goods_id}, skuId={sku_id}")
         return jsonify(queries), 200
