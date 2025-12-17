@@ -49,7 +49,7 @@ services:
       dockerfile: Dockerfile
     container_name: query-generator-frontend-prod
     ports:
-      - "${FRONTEND_PORT_HTTP:-80}:80"
+      - "${FRONTEND_PORT_HTTP:-9000}:9000"
       - "${FRONTEND_PORT_HTTPS:-443}:443"
     depends_on:
       backend:
@@ -58,7 +58,7 @@ services:
       - query-generator-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/api/health || exit 1"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

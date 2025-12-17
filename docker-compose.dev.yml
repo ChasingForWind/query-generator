@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: query-generator-frontend-dev
     ports:
-      - "8080:80"
+      - "9000:9000"
     depends_on:
       - backend
     volumes:
