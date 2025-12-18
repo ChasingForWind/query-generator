@@ -49,8 +49,7 @@ services:
       dockerfile: Dockerfile
     container_name: query-generator-frontend-prod
     ports:
-      - "${FRONTEND_PORT_HTTP:-9000}:9000"
-      - "${FRONTEND_PORT_HTTPS:-443}:443"
+      - "9000:9000"
     depends_on:
       backend:
         condition: service_healthy
